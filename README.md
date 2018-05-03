@@ -4,12 +4,18 @@ A sandbox practice for the genetic algorithm.
 
 ## Inputs
 
-* Training Data Selection
-* Iteration Times
-* Population Size
-* Probability of Crossover
-* Probability of Mutation
-* Number of the RBFN Perceptrons
+* Training
+  * Training Data Selection
+  * Start/Stop Btn
+  * Iteration Times
+  * Population Size
+  * Probability of Crossover
+  * Probability of Mutation
+  * Number of the RBFN Perceptrons
+* Testing
+  * Map Selection
+  * Start/Stop Btn
+  * FPS
 
 # Outputs
 
