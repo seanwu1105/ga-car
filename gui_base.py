@@ -22,8 +22,8 @@ class BaseWidget(QWidget):
     def __init__(self, maps, datasets):
         super().__init__()
         layout = QHBoxLayout()
-        panel_test = TestingPanel()
-        panel_train = TrainingPanel(maps, datasets, panel_test)
+        panel_test = TestingPanel(maps)
+        panel_train = TrainingPanel(datasets, panel_test)
         layout.addWidget(panel_train)
         layout.addWidget(panel_test)
 
