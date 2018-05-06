@@ -18,6 +18,9 @@ from PyQt5.QtWidgets import QApplication
 import gui_base
 
 
+TrainingData = collections.namedtuple('TrainingData', ['i', 'o'])
+
+
 def main():
     """ Create GUI application and read files. """
     sys.argv += ['--style', 'fusion']
@@ -46,8 +49,8 @@ def read_maps(folderpath='maps'):
         }
     return collections.OrderedDict(sorted(maps.items()))
 
+
 def read_training_datasets(folderpath='data'):
-    TrainingData = collections.namedtuple('TrainingData', ['i', 'o'])
     dataset = {}
     folderpath = pathlib.Path(folderpath)
     for filepath in folderpath.glob("*.txt"):

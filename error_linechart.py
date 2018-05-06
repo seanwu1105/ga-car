@@ -1,4 +1,3 @@
-from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import QVBoxLayout, QFrame
 from PyQt5.QtChart import QChart, QChartView, QLineSeries
@@ -10,10 +9,9 @@ class ErrorLineChart(QFrame):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
-        self.setMinimumHeight(200)
+        self.setMinimumHeight(100)
         self.setMinimumWidth(400)
 
-        self.x_pts, self.y_pts = list(), list()
         self.series = QLineSeries()
         self.chart = QChart()
         self.chart.addSeries(self.series)
@@ -25,14 +23,21 @@ class ErrorLineChart(QFrame):
         chart_view.setRenderHint(QPainter.Antialiasing)
         layout.addWidget(chart_view)
 
-    @pyqtSlot(float, float)
-    def append_pt(self, x, y):
-        self.x_pts.append(x)
-        self.y_pts.append(y)
+        self.x_max, self.y_max = 0, 0
+
+    def append_point(self, x, y):
         self.series.append(x, y)
-        x_max, x_min = max(self.x_list), min(self.x_list)
-        if x_max - x_min > 500:
-            self.chart.axisX().setRange(x_max - 500, x_max)
+        self.x_max = max(x, self.x_max)
+        self.y_max = max(y, self.y_max)
+        if self.x_max > 100:
+            self.chart.axisX().setRange(self.x_max - 100, self.x_max)
         else:
-            self.chart.axisX().setRange(x_min, x_max)
-        self.chart.axisY().setRange(min(self.y_list) - 5, max(self.y_list) + 5)
+            self.chart.axisX().setRange(0, self.x_max)
+        self.chart.axisY().setRange(0, self.y_max + 1000)
+
+    def clear(self):
+        self.chart.removeAllSeries()
+        self.series = QLineSeries()
+        self.chart.addSeries(self.series)
+        self.chart.createDefaultAxes()
+        self.x_max, self.y_max = 0, 0

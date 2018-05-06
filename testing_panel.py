@@ -8,6 +8,7 @@ from panel import Panel
 from car_simulator_plot import CarSimulatorPlot
 from car import Car
 from run import RunCar
+from rbfn import RBFN
 
 
 class TestingPanel(Panel):
@@ -15,6 +16,7 @@ class TestingPanel(Panel):
     def __init__(self, maps):
         super().__init__()
         self.maps = maps
+        self.rbfn = None
 
         self.__set_execution_ui()
         self.__set_outputs_ui()
@@ -111,11 +113,11 @@ class TestingPanel(Panel):
         self.map_selector.setEnabled(True)
 
     @pyqtSlot(str)
-    def __print_console(self, text):
+    def print_console(self, text):
         self.__console.append(text)
 
     @pyqtSlot(list, list, list)
-    def show_dists(self, pos, intersections, dists):
+    def __show_dists(self, pos, intersections, dists):
         self.simulator.paint_dist(pos, intersections)
         self.dist_front.setText(str(dists[0]))
         self.dist_left.setText(str(dists[1]))
@@ -137,8 +139,8 @@ class TestingPanel(Panel):
         self.simulator.paint_map(self.__current_map)
         self.__move_car(self.__current_map['start_pos'],
                         self.__current_map['start_angle'])
-        self.show_dists(self.__current_map['start_pos'],
-                        [self.__current_map['start_pos']] * 3, ['--'] * 3)
+        self.__show_dists(self.__current_map['start_pos'],
+                          [self.__current_map['start_pos']] * 3, ['--'] * 3)
 
     @pyqtSlot(list, float, float)
     def __move_car(self, pos, angle, wheel_angle=0.0):
@@ -147,22 +149,30 @@ class TestingPanel(Panel):
         self.car_angle.setText(str(angle))
         self.wheel_angle.setText(str(wheel_angle))
 
+    @pyqtSlot(RBFN)
+    def load_rbfn(self, rbfn):
+        self.rbfn = rbfn
+        self.print_console('New RBFN model has been loaded.')
+        self.start_btn.setEnabled(True)
+
     @pyqtSlot()
     def __run(self):
         # reset the map
         self.__change_map()
         # create a QThread
-        self.__thread = RunCar(self.__car, None,
+        if self.rbfn is None:
+            raise TypeError('The RBFN model has not yet loaded.')
+        self.__thread = RunCar(self.__car, self.rbfn,
                                (self.__current_map['end_area_lt'],
                                 self.__current_map['end_area_rb']),
                                self.fps.value())
         self.stop_btn.clicked.connect(self.__thread.stop)
         self.__thread.started.connect(self.__init_widgets)
         self.__thread.finished.connect(self.__reset_widgets)
-        self.__thread.sig_console.connect(self.__print_console)
+        self.__thread.sig_console.connect(self.print_console)
         self.__thread.sig_car.connect(self.__move_car)
         self.__thread.sig_car_collided.connect(self.__show_car_collided)
-        self.__thread.sig_dists.connect(self.show_dists)
+        self.__thread.sig_dists.connect(self.__show_dists)
         self.__thread.sig_results.connect(self.__get_results)
         self.__thread.start()
 

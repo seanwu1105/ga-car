@@ -27,23 +27,23 @@ class Chart(QChart):
     def __init__(self):
         super().__init__()
         self.legend().hide()
-        self.x_list = list()
-        self.y_list = list()
         self.m_series = QLineSeries()
         self.addSeries(self.m_series)
         self.createDefaultAxes()
 
+        self.x_max, self.x_min = 0, 0
+        self.y_max, self.y_min = 0, 0
+
     @pyqtSlot(float, float)
     def append_point(self, x, y):
-        self.x_list.append(x)
-        self.y_list.append(y)
         self.m_series.append(x, y)
-        x_max, x_min = max(self.x_list), min(self.x_list)
-        if x_max - x_min > 500:
-            self.axisX().setRange(x_max - 500, x_max)
+        self.x_max, self.x_min = max(x, self.x_max), min(x, self.x_min)
+        self.y_max, self.y_min = max(y, self.y_max), min(y, self.y_min)
+        if self.x_max - self.x_min > 100:
+            self.axisX().setRange(self.x_max - 100, self.x_max)
         else:
-            self.axisX().setRange(x_min, x_max)
-        self.axisY().setRange(min(self.y_list) - 5, max(self.y_list) + 5)
+            self.axisX().setRange(self.x_min, self.x_max)
+        self.axisY().setRange(self.y_min - 5, self.y_max + 5)
 
 class Thread(QThread):
 
@@ -54,7 +54,7 @@ class Thread(QThread):
 
     def run(self):
         for x in range(0, 10000):
-            self.sig_append_pt.emit(x, random.uniform(0, 5))
+            self.sig_append_pt.emit(x, random.uniform(-10, 10))
             time.sleep(0.05)
 
 if __name__ == '__main__':
