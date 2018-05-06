@@ -1,5 +1,6 @@
 import copy
 import functools
+import itertools
 import multiprocessing as mp
 import random
 import time
@@ -29,9 +30,9 @@ class GA(QThread):
         self.dataset = dataset
 
         if reproduction_method == 'rw':
-            self.reproduction = self.__roulette_wheel_selection
+            self.__reproduction = self.__roulette_wheel_selection
         else:
-            self.reproduction = self.__tournament_selection
+            self.__reproduction = self.__tournament_selection
 
         if mean_range is None:
             mean_range = (min(min(d.i) for d in self.dataset),
@@ -41,47 +42,42 @@ class GA(QThread):
 
         # initialize population
         data_dim = len(self.dataset[0].i)
-        nneuron = len(self.rbfn.neurons)
+        self.nneuron = len(self.rbfn.neurons)
         self.population = list()
         for _ in range(self.population_size):
-            indiv = np.random.uniform(-1, 1, nneuron)
+            indiv = np.random.uniform(-1, 1, self.nneuron)
             indiv = np.append(indiv, np.random.uniform(
-                *mean_range, (nneuron - 1) * data_dim))
-            indiv = np.append(indiv, np.random.uniform(0, sd_max, nneuron - 1))
+                *mean_range, (self.nneuron - 1) * data_dim))
+            indiv = np.append(indiv, np.random.uniform(0, sd_max, self.nneuron - 1))
             self.population.append(indiv)
 
     def run(self):
-        st = time.time()
         for i in range(self.iter_times):
             if self.abort:
                 break
             self.sig_current_iter_time.emit(i)
 
-            ### calculate the fitting function
-            with mp.Pool() as pool:
-                results = pool.map(functools.partial(fitting_func,
-                                                     dataset=self.dataset,
-                                                     rbfn=copy.deepcopy(self.rbfn)),
-                                   self.population)
+            # calculate the fitting function
+            results = self.__get_fitting_function_results()
 
             for r in results:
                 time.sleep(0.001)
                 self.sig_current_error.emit(r)
-            results = np.array(results)
             avg_error = sum(results) / len(results)
             self.sig_avg_error.emit(avg_error)
 
-            ### reproduction
+            # reproduction
             scores = np.full_like(results, max(results) + avg_error) - results
-            crossover_pool = self.reproduction(dict(zip(scores, self.population)))
+            self.__reproduction(dict(zip(scores, self.population)))
 
-            self.population = crossover_pool
+            # crossover
+            self.__crossover()
 
-            ### crossover
+            # mutation
+            #self.__mutation()
 
-            ### mutation
-
-        print(time.time() - st)
+        results = self.__get_fitting_function_results()
+        self.rbfn.load_model(min(zip(results, self.population))[1])
         self.sig_rbfn.emit(self.rbfn)
 
     @pyqtSlot()
@@ -91,6 +87,14 @@ class GA(QThread):
                                   "The thread will be stop in next iteration.")
 
         self.abort = True
+
+    def __get_fitting_function_results(self):
+        with mp.Pool() as pool:
+            results = pool.map(functools.partial(fitting_func,
+                                                 dataset=self.dataset,
+                                                 rbfn=copy.deepcopy(self.rbfn)),
+                               self.population)
+        return np.array(results)
 
     def __roulette_wheel_selection(self, choices):
         def weighted_random_choice(choices):
@@ -105,14 +109,46 @@ class GA(QThread):
         for _ in range(self.population_size):
             pool.append(weighted_random_choice(choices))
 
-        return pool
+        self.population = pool
 
     def __tournament_selection(self, choices):
         pool = list()
         for _ in range(self.population_size):
-            pool.append(choices[max(random.choices(list(choices.keys()), k=2))])
-        return pool
+            pool.append(
+                choices[max(random.choices(list(choices.keys()), k=2))])
+        self.population = pool
 
+    def __crossover(self):
+        def pairwise(iterable):
+            iterator = iter(iterable)
+            return zip(iterator, iterator)
+
+        random.shuffle(self.population)
+        pairs = list(map(list, pairwise(self.population)))
+        for pair in pairs:
+            if random.uniform(0, 1) <= self.pc:
+                if bool(random.getrandbits(1)):
+                    # closer
+                    pair[0] = pair[0] + random.uniform(0, 1) * (pair[0] - pair[1])
+                    pair[1] = pair[1] - random.uniform(0, 1) * (pair[0] - pair[1])
+                else:
+                    # further
+                    pair[0] = pair[0] + random.uniform(0, 1) * (pair[1] - pair[0])
+                    pair[1] = pair[1] - random.uniform(0, 1) * (pair[1] - pair[0])
+        if len(self.population) % 2 == 1:
+            last_chromosome = self.population[-1]
+            self.population = list(itertools.chain.from_iterable(pairs))
+            self.population.append(last_chromosome)
+        else:
+            self.population = list(itertools.chain.from_iterable(pairs))
+
+    def __mutation(self):
+        def random_noise():
+            pass
+        pass
+
+    def __chromosome_limiter(self, chromosome):
+        chromosome[:self.nneuron]
 
 def fitting_func(indiv, dataset, rbfn):
     """Calculate the error function (fitting function) for each individual.
@@ -130,4 +166,4 @@ def fitting_func(indiv, dataset, rbfn):
     """
 
     rbfn.load_model(indiv)
-    return 0.5 * sum((d.o - rbfn.output(d.i, antinorm=True))**2 for d in dataset)
+    return 0.5 * sum(abs(d.o - rbfn.output(d.i, antinorm=True)) for d in dataset)
