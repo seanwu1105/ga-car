@@ -22,8 +22,8 @@ class CarSimulatorPlot(FigureCanvas):
 
         super().__init__(fig)
 
-        self.setMinimumWidth(400)
-        self.setMinimumHeight(400)
+        self.setMinimumWidth(500)
+        self.setMinimumHeight(500)
         FigureCanvas.setSizePolicy(self,
                                    QSizePolicy.Expanding,
                                    QSizePolicy.Expanding)

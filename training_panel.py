@@ -1,9 +1,10 @@
 """ Define the contents of training panel. """
 
 from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtWidgets import (QHBoxLayout, QFormLayout, QGroupBox, QPushButton,
+from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox,
                              QComboBox, QSpinBox, QDoubleSpinBox, QLabel,
-                             QProgressBar)
+                             QProgressBar, QPushButton, QRadioButton,
+                             QFrame)
 
 from panel import Panel
 from testing_panel import TestingPanel
@@ -67,6 +68,13 @@ class TrainingPanel(Panel):
         self.population_size.setStatusTip('The population size for genetic '
                                           'algorithm.')
 
+        self.reproduction = QHBoxLayout()
+        self.roulette_wheel_selection = QRadioButton('Roulette Wheel')
+        self.tournament_selection = QRadioButton('Tournament')
+        self.reproduction.addWidget(self.roulette_wheel_selection)
+        self.reproduction.addWidget(self.tournament_selection)
+        self.roulette_wheel_selection.toggle()
+
         self.p_crossover = QDoubleSpinBox()
         self.p_crossover.setRange(0, 1)
         self.p_crossover.setValue(0.5)
@@ -94,12 +102,13 @@ class TrainingPanel(Panel):
         self.sd_max.setStatusTip('The maximum of standard deviation of each '
                                  'neuron in RBFN.')
 
-        inner_layout.addRow(QLabel('Iterating Times:'), self.iter_times)
-        inner_layout.addRow(QLabel('Population Size:'), self.population_size)
-        inner_layout.addRow(QLabel('Crossover Probability:'), self.p_crossover)
-        inner_layout.addRow(QLabel('Mutation Probability:'), self.p_mutation)
-        inner_layout.addRow(QLabel('Number of Neuron:'), self.nneuron)
-        inner_layout.addRow(QLabel('Maximum of SD:'), self.sd_max)
+        inner_layout.addRow('Iterating Times:', self.iter_times)
+        inner_layout.addRow('Population Size:', self.population_size)
+        inner_layout.addRow('Reproduction:', self.reproduction)
+        inner_layout.addRow('Crossover Probability:', self.p_crossover)
+        inner_layout.addRow('Mutation Probability:', self.p_mutation)
+        inner_layout.addRow('Number of Neuron:', self.nneuron)
+        inner_layout.addRow('Maximum of SD:', self.sd_max)
 
         self._layout.addWidget(group_box)
 
@@ -110,33 +119,45 @@ class TrainingPanel(Panel):
 
         self.current_iter_time = QLabel('--')
         self.current_error = QLabel('--')
+        self.avg_error = QLabel('--')
         self.progressbar = QProgressBar()
 
         self.current_iter_time.setAlignment(Qt.AlignCenter)
         self.current_error.setAlignment(Qt.AlignCenter)
+        self.avg_error.setAlignment(Qt.AlignCenter)
 
         self.current_iter_time.setStatusTip('The current iterating time of '
                                             'genetic algorithm.')
         self.current_error.setStatusTip('The current error from the fitting '
                                         'function.')
+        self.avg_error.setStatusTip('The average error from the fitting '
+                                    'function in current iteration.')
 
         inner_layout.addRow('Current Iterating Time:', self.current_iter_time)
         inner_layout.addRow('Current Error:', self.current_error)
+        inner_layout.addRow('Average Error:', self.avg_error)
         inner_layout.addRow(self.progressbar)
 
         self._layout.addWidget(group_box)
 
     def __set_graphic_ui(self):
-        group_box = QGroupBox('Error Line Chart:')
-        inner_layout = QHBoxLayout()
+        group_box = QGroupBox('Error Line Charts:')
+        inner_layout = QVBoxLayout()
         group_box.setLayout(inner_layout)
 
         self.err_chart = ErrorLineChart()
         self.err_chart.setStatusTip('The history of error from the fitting '
-                                    ' of genetic algorithm.')
-        self.__err_x = 0
+                                    'of genetic algorithm.')
+        self.__err_x = 1
 
+        self.avg_err_chart = ErrorLineChart()
+        self.avg_err_chart.setStatusTip('The history of average error from the '
+                                        'fitting of genetic algorithm.')
+
+        inner_layout.addWidget(QLabel('Current Error'))
         inner_layout.addWidget(self.err_chart)
+        inner_layout.addWidget(QLabel('Average Error'))
+        inner_layout.addWidget(self.avg_err_chart)
         self._layout.addWidget(group_box)
 
     @pyqtSlot()
@@ -151,7 +172,8 @@ class TrainingPanel(Panel):
         self.nneuron.setDisabled(True)
         self.sd_max.setDisabled(True)
         self.err_chart.clear()
-        self.__err_x = 0
+        self.avg_err_chart.clear()
+        self.__err_x = 1
 
     @pyqtSlot()
     def __reset_widgets(self):
@@ -176,16 +198,26 @@ class TrainingPanel(Panel):
         self.err_chart.append_point(self.__err_x, value)
         self.__err_x += 1
 
+    @pyqtSlot(float)
+    def __show_avg_error(self, value):
+        self.avg_error.setText('{:.7f}'.format(value))
+        self.avg_err_chart.append_point(int(self.current_iter_time.text()), value)
+
     def __run(self):
         self.progressbar.setMaximum(self.iter_times.value())
 
         self.__current_dataset = self.datasets[self.data_selector.currentText()]
         mean_range = (min(min(d.i) for d in self.__current_dataset),
                       max(max(d.i) for d in self.__current_dataset))
+        if self.roulette_wheel_selection.isChecked():
+            reproduction_method = 'rw'
+        else:
+            reproduction_method = 't'
 
         rbfn = RBFN(self.nneuron.value(), mean_range, self.sd_max.value())
 
         self.__ga = GA(self.iter_times.value(), self.population_size.value(),
+                       reproduction_method,
                        self.p_crossover.value(), self.p_mutation.value(), rbfn,
                        self.__current_dataset, mean_range, self.sd_max.value())
         self.stop_btn.clicked.connect(self.__ga.stop)
@@ -193,6 +225,7 @@ class TrainingPanel(Panel):
         self.__ga.finished.connect(self.__reset_widgets)
         self.__ga.sig_current_iter_time.connect(self.__show_current_iter_time)
         self.__ga.sig_current_error.connect(self.__show_current_error)
+        self.__ga.sig_avg_error.connect(self.__show_avg_error)
         self.__ga.sig_console.connect(self.testing_panel.print_console)
         self.__ga.sig_rbfn.connect(self.testing_panel.load_rbfn)
         self.__ga.start()

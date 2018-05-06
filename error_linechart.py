@@ -9,7 +9,7 @@ class ErrorLineChart(QFrame):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
-        self.setMinimumHeight(100)
+        self.setMinimumHeight(150)
         self.setMinimumWidth(400)
 
         self.series = QLineSeries()
@@ -23,7 +23,7 @@ class ErrorLineChart(QFrame):
         chart_view.setRenderHint(QPainter.Antialiasing)
         layout.addWidget(chart_view)
 
-        self.x_max, self.y_max = 0, 0
+        self.x_max, self.y_max = 1, 0
 
     def append_point(self, x, y):
         self.series.append(x, y)
@@ -32,7 +32,7 @@ class ErrorLineChart(QFrame):
         if self.x_max > 100:
             self.chart.axisX().setRange(self.x_max - 100, self.x_max)
         else:
-            self.chart.axisX().setRange(0, self.x_max)
+            self.chart.axisX().setRange(1, self.x_max)
         self.chart.axisY().setRange(0, self.y_max + 1000)
 
     def clear(self):

@@ -1,3 +1,4 @@
 import numpy as np
 
-print(np.array(np.array([1, 2, 3])))
+x = np.array([1, 0, 3, .096])
+print(np.full_like(x, 99))
