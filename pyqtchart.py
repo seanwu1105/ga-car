@@ -26,8 +26,8 @@ class Chart(QChart):
 
     def __init__(self):
         super().__init__()
-        self.legend().hide()
         self.m_series = QLineSeries()
+        self.m_series.setName('YO!')
         self.addSeries(self.m_series)
         self.createDefaultAxes()
 

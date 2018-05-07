@@ -24,7 +24,7 @@ class TestingPanel(Panel):
         self.__set_console_ui()
 
     def __set_execution_ui(self):
-        group_box = QGroupBox('Testing')
+        group_box = QGroupBox('Testing Execution')
         inner_layout = QHBoxLayout()
         group_box.setLayout(inner_layout)
 

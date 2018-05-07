@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox,
                              QComboBox, QSpinBox, QDoubleSpinBox, QLabel,
                              QProgressBar, QPushButton, QRadioButton,
-                             QFrame)
+                             QCheckBox)
 
 from panel import Panel
 from testing_panel import TestingPanel
@@ -30,7 +30,7 @@ class TrainingPanel(Panel):
         self.__set_graphic_ui()
 
     def __set_execution_ui(self):
-        group_box = QGroupBox('Training')
+        group_box = QGroupBox('Training Execution')
         inner_layout = QHBoxLayout()
         group_box.setLayout(inner_layout)
 
@@ -46,9 +46,15 @@ class TrainingPanel(Panel):
         self.stop_btn.setStatusTip('Force the training stop running.')
         self.stop_btn.setDisabled(True)
 
+        self.multicore_cb = QCheckBox('Multicore')
+        self.multicore_cb.setStatusTip('Use multiprocessing in calculating '
+                                       'fitting for populations.')
+        self.multicore_cb.setChecked(True)
+
         inner_layout.addWidget(self.data_selector, 1)
         inner_layout.addWidget(self.start_btn)
         inner_layout.addWidget(self.stop_btn)
+        inner_layout.addWidget(self.multicore_cb)
 
         self._layout.addWidget(group_box)
 
@@ -89,15 +95,25 @@ class TrainingPanel(Panel):
         self.p_mutation.setStatusTip('The probability of mutation for '
                                      'genetic algorithm.')
 
+        self.mutation_scale = QDoubleSpinBox()
+        self.mutation_scale.setDecimals(3)
+        self.mutation_scale.setRange(0.001, 0.5)
+        self.mutation_scale.setValue(0.1)
+        self.mutation_scale.setSingleStep(0.1)
+        self.mutation_scale.setStatusTip('The scale of random noise in '
+                                         'mutation for genetic algorithm. Full '
+                                         'scale (s=1) creates the noise which '
+                                         'range is the domain of parameter of '
+                                         'chromosome itself.')
+
         self.nneuron = QSpinBox()
         self.nneuron.setRange(1, 1000)
         self.nneuron.setValue(4)
         self.nneuron.setStatusTip('The number of RBFN neuron.')
 
         self.sd_max = QDoubleSpinBox()
-        self.sd_max.setRange(0, 20)
+        self.sd_max.setRange(0.01, 20)
         self.sd_max.setValue(1)
-        self.sd_max.setMinimum(0.01)
         self.sd_max.setSingleStep(0.1)
         self.sd_max.setStatusTip('The maximum of standard deviation of each '
                                  'neuron in RBFN.')
@@ -107,6 +123,7 @@ class TrainingPanel(Panel):
         inner_layout.addRow('Reproduction:', self.reproduction)
         inner_layout.addRow('Crossover Probability:', self.p_crossover)
         inner_layout.addRow('Mutation Probability:', self.p_mutation)
+        inner_layout.addRow('Mutation Scale:', self.mutation_scale)
         inner_layout.addRow('Number of Neuron:', self.nneuron)
         inner_layout.addRow('Maximum of SD:', self.sd_max)
 
@@ -120,11 +137,13 @@ class TrainingPanel(Panel):
         self.current_iter_time = QLabel('--')
         self.current_error = QLabel('--')
         self.avg_error = QLabel('--')
+        self.least_error = QLabel('--')
         self.progressbar = QProgressBar()
 
         self.current_iter_time.setAlignment(Qt.AlignCenter)
         self.current_error.setAlignment(Qt.AlignCenter)
         self.avg_error.setAlignment(Qt.AlignCenter)
+        self.least_error.setAlignment(Qt.AlignCenter)
 
         self.current_iter_time.setStatusTip('The current iterating time of '
                                             'genetic algorithm.')
@@ -132,10 +151,13 @@ class TrainingPanel(Panel):
                                         'function.')
         self.avg_error.setStatusTip('The average error from the fitting '
                                     'function in current iteration.')
+        self.least_error.setStatusTip('The least error from the fitting '
+                                      'function in current iteration.')
 
         inner_layout.addRow('Current Iterating Time:', self.current_iter_time)
         inner_layout.addRow('Current Error:', self.current_error)
         inner_layout.addRow('Average Error:', self.avg_error)
+        inner_layout.addRow('Least Error:', self.least_error)
         inner_layout.addRow(self.progressbar)
 
         self._layout.addWidget(group_box)
@@ -145,25 +167,28 @@ class TrainingPanel(Panel):
         inner_layout = QVBoxLayout()
         group_box.setLayout(inner_layout)
 
-        self.err_chart = ErrorLineChart()
+        self.err_chart = ErrorLineChart(1)
         self.err_chart.setStatusTip('The history of error from the fitting '
-                                    'of genetic algorithm.')
+                                    'of genetic algorithm for each data.')
         self.__err_x = 1
 
-        self.avg_err_chart = ErrorLineChart()
-        self.avg_err_chart.setStatusTip('The history of average error from the '
-                                        'fitting of genetic algorithm.')
+        self.iter_err_chart = ErrorLineChart(2, ('Avg', 'Least'))
+        self.iter_err_chart.setStatusTip('The history of average and least '
+                                         'error from the fitting of genetic '
+                                         'algorithm for each iteration.')
+        self.iter_err_chart.setMinimumHeight(150)
 
         inner_layout.addWidget(QLabel('Current Error'))
         inner_layout.addWidget(self.err_chart)
         inner_layout.addWidget(QLabel('Average Error'))
-        inner_layout.addWidget(self.avg_err_chart)
+        inner_layout.addWidget(self.iter_err_chart)
         self._layout.addWidget(group_box)
 
     @pyqtSlot()
     def __init_widgets(self):
         self.start_btn.setDisabled(True)
         self.stop_btn.setEnabled(True)
+        self.multicore_cb.setDisabled(True)
         self.data_selector.setDisabled(True)
         self.iter_times.setDisabled(True)
         self.population_size.setDisabled(True)
@@ -171,16 +196,18 @@ class TrainingPanel(Panel):
         self.tournament_selection.setDisabled(True)
         self.p_crossover.setDisabled(True)
         self.p_mutation.setDisabled(True)
+        self.mutation_scale.setDisabled(True)
         self.nneuron.setDisabled(True)
         self.sd_max.setDisabled(True)
         self.err_chart.clear()
-        self.avg_err_chart.clear()
+        self.iter_err_chart.clear()
         self.__err_x = 1
 
     @pyqtSlot()
     def __reset_widgets(self):
         self.start_btn.setEnabled(True)
         self.stop_btn.setDisabled(True)
+        self.multicore_cb.setEnabled(True)
         self.data_selector.setEnabled(True)
         self.iter_times.setEnabled(True)
         self.population_size.setEnabled(True)
@@ -188,6 +215,7 @@ class TrainingPanel(Panel):
         self.tournament_selection.setEnabled(True)
         self.p_crossover.setEnabled(True)
         self.p_mutation.setEnabled(True)
+        self.mutation_scale.setEnabled(True)
         self.nneuron.setEnabled(True)
         self.sd_max.setEnabled(True)
 
@@ -202,15 +230,20 @@ class TrainingPanel(Panel):
         self.err_chart.append_point(self.__err_x, value)
         self.__err_x += 1
 
-    @pyqtSlot(float)
-    def __show_avg_error(self, value):
-        self.avg_error.setText('{:.7f}'.format(value))
-        self.avg_err_chart.append_point(int(self.current_iter_time.text()), value)
+    @pyqtSlot(float, float)
+    def __show_iter_error(self, avg, least):
+        self.avg_error.setText('{:.7f}'.format(avg))
+        self.least_error.setText('{:.7f}'.format(least))
+        self.iter_err_chart.append_point(
+            int(self.current_iter_time.text()), avg, 0)
+        self.iter_err_chart.append_point(
+            int(self.current_iter_time.text()), least, 1)
 
     def __run(self):
         self.progressbar.setMaximum(self.iter_times.value())
 
-        self.__current_dataset = self.datasets[self.data_selector.currentText()]
+        self.__current_dataset = self.datasets[self.data_selector.currentText(
+        )]
         mean_range = (min(min(d.i) for d in self.__current_dataset),
                       max(max(d.i) for d in self.__current_dataset))
         if self.roulette_wheel_selection.isChecked():
@@ -222,14 +255,16 @@ class TrainingPanel(Panel):
 
         self.__ga = GA(self.iter_times.value(), self.population_size.value(),
                        reproduction_method,
-                       self.p_crossover.value(), self.p_mutation.value(), rbfn,
-                       self.__current_dataset, mean_range, self.sd_max.value())
+                       self.p_crossover.value(), self.p_mutation.value(),
+                       self.mutation_scale.value(), rbfn,
+                       self.__current_dataset, mean_range, self.sd_max.value(),
+                       is_multicore=self.multicore_cb.isChecked())
         self.stop_btn.clicked.connect(self.__ga.stop)
         self.__ga.started.connect(self.__init_widgets)
         self.__ga.finished.connect(self.__reset_widgets)
         self.__ga.sig_current_iter_time.connect(self.__show_current_iter_time)
         self.__ga.sig_current_error.connect(self.__show_current_error)
-        self.__ga.sig_avg_error.connect(self.__show_avg_error)
+        self.__ga.sig_iter_error.connect(self.__show_iter_error)
         self.__ga.sig_console.connect(self.testing_panel.print_console)
         self.__ga.sig_rbfn.connect(self.testing_panel.load_rbfn)
         self.__ga.start()

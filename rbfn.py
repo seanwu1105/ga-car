@@ -96,7 +96,7 @@ class Neuron(object):
             self.output = self.__get_output(self.__input_data)
 
     def __get_output(self, data):
-        if self.sd == 0:
+        if self.sd <= 0:
             return 0
         return self.sw * math.exp(
             (data - self.mean).dot(data - self.mean) / (-2 * self.sd**2))
