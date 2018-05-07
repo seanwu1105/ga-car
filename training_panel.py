@@ -65,7 +65,7 @@ class TrainingPanel(Panel):
 
         self.iter_times = QSpinBox()
         self.iter_times.setRange(1, 1000000)
-        self.iter_times.setValue(100)
+        self.iter_times.setValue(300)
         self.iter_times.setStatusTip('The total iterating times for training.')
 
         self.population_size = QSpinBox()
@@ -200,6 +200,7 @@ class TrainingPanel(Panel):
         self.data_selector.setDisabled(True)
         self.iter_times.setDisabled(True)
         self.population_size.setDisabled(True)
+        self.score_amplifier.setDisabled(True)
         self.roulette_wheel_selection.setDisabled(True)
         self.tournament_selection.setDisabled(True)
         self.p_crossover.setDisabled(True)
@@ -219,6 +220,7 @@ class TrainingPanel(Panel):
         self.data_selector.setEnabled(True)
         self.iter_times.setEnabled(True)
         self.population_size.setEnabled(True)
+        self.score_amplifier.setEnabled(True)
         self.roulette_wheel_selection.setEnabled(True)
         self.tournament_selection.setEnabled(True)
         self.p_crossover.setEnabled(True)
