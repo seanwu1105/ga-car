@@ -10,18 +10,12 @@ class RBFN(object):
                                mean_range=mean_range) for j in range(nneuron)]
         self.neurons.insert(0, Neuron(is_threshold=True))
 
-    def output(self, data, antinorm=False, show=False):
+    def output(self, data, antinorm=False):
         data = np.array(data)
         for neuron in self.neurons:
             neuron.input_data(data)
-        if show:
-            for neuron in self.neurons:
-                print(neuron.output, end=' ')
-            print()
         res = sum(n.output for n in self.neurons)
         if antinorm:
-            if show:
-                print(self.__antinormalize(res))
             return self.__antinormalize(res)
         return res
 
@@ -52,11 +46,7 @@ class RBFN(object):
 
     @staticmethod
     def __antinormalize(value):
-        if value < -1:
-            return -40
-        if value > 1:
-            return 40
-        return value * 40
+        return max(min(value * 40, 40), -40)
 
 
 class Neuron(object):

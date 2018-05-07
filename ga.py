@@ -2,6 +2,7 @@ import copy
 import functools
 import itertools
 import multiprocessing as mp
+import math
 import random
 import time
 
@@ -21,11 +22,12 @@ class GA(QThread):
 
     def __init__(self, iter_times, population_size, reproduction_method, pc, pm,
                  mutation_scale, rbfn, dataset, mean_range=None, sd_max=1,
-                 is_multicore=True):
+                 score_amplifier=1, is_multicore=True):
         super().__init__()
         self.abort = False
         self.iter_times = iter_times
         self.population_size = population_size
+        self.score_amplifier = score_amplifier
         self.pc = pc
         self.pm = pm
         self.mutation_scale = mutation_scale
@@ -52,6 +54,7 @@ class GA(QThread):
             self.population.append(self.__create_chromosome())
 
     def run(self):
+        best_chromosome = (math.inf,)
         for i in range(self.iter_times):
             if self.abort:
                 break
@@ -59,12 +62,15 @@ class GA(QThread):
 
             # calculate the fitting function
             results = self.__get_fitting_function_results()
+            best_chromosome = min(best_chromosome, *zip(
+                results, self.population), key=lambda s: s[0])
 
-            self.__show_results(results)
+            self.__show_results(results, best_chromosome[0])
 
             # reproduction
             avg_error = sum(results) / len(results)
             scores = np.full_like(results, max(results) + avg_error) - results
+            scores = np.power(scores, self.score_amplifier) # amplify the winner
             self.__reproduction(dict(zip(scores, self.population)))
 
             # crossover
@@ -75,11 +81,12 @@ class GA(QThread):
 
         self.sig_console.emit('Selecting the best chromosome...')
         results = self.__get_fitting_function_results()
-        self.__show_results(results)
-        best_chromosome = min(
-            zip(results, self.population), key=lambda s: s[0])
-        self.sig_console.emit('The least error: %d' % best_chromosome[0])
-        self.sig_console.emit('The best chromosome: \n{}'.format(best_chromosome[1]))
+        best_chromosome = min(best_chromosome, *zip(
+            results, self.population), key=lambda s: s[0])
+        self.__show_results(results, best_chromosome[0])
+        self.sig_console.emit('The least error: %f' % best_chromosome[0])
+        self.sig_console.emit(
+            'The best chromosome: \n{}'.format(best_chromosome[1]))
         self.rbfn.load_model(best_chromosome[1])
         self.sig_rbfn.emit(self.rbfn)
 
@@ -182,11 +189,11 @@ class GA(QThread):
                 None, out=chromosome[-(self.nneuron - 1):])
         return chromosome
 
-    def __show_results(self, results):
+    def __show_results(self, results, best):
         for res in results:
             time.sleep(0.001)
             self.sig_current_error.emit(res)
-        self.sig_iter_error.emit(sum(results) / len(results), min(results))
+        self.sig_iter_error.emit(sum(results) / len(results), best)
 
 
 def fitting_func(chromosome, dataset, rbfn):
@@ -204,9 +211,6 @@ def fitting_func(chromosome, dataset, rbfn):
         float: The result of fitting function.
     """
 
-    #print('c: {}'.format(chromosome))
-
     rbfn.load_model(chromosome)
     res = sum(abs(d.o - rbfn.output(d.i, antinorm=True)) for d in dataset)
-    #print('r: {}'.format(res))
-    return res
+    return res / len(dataset)

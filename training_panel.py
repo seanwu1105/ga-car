@@ -70,7 +70,7 @@ class TrainingPanel(Panel):
 
         self.population_size = QSpinBox()
         self.population_size.setRange(1, 100000000)
-        self.population_size.setValue(10)
+        self.population_size.setValue(100)
         self.population_size.setStatusTip('The population size for genetic '
                                           'algorithm.')
 
@@ -80,6 +80,13 @@ class TrainingPanel(Panel):
         self.reproduction.addWidget(self.roulette_wheel_selection)
         self.reproduction.addWidget(self.tournament_selection)
         self.roulette_wheel_selection.toggle()
+
+        self.score_amplifier = QDoubleSpinBox()
+        self.score_amplifier.setRange(1, 3)
+        self.score_amplifier.setValue(1.7)
+        self.score_amplifier.setSingleStep(0.01)
+        self.score_amplifier.setStatusTip('Amplify the winner score in '
+                                          'selection (exponentially).')
 
         self.p_crossover = QDoubleSpinBox()
         self.p_crossover.setRange(0, 1)
@@ -116,11 +123,12 @@ class TrainingPanel(Panel):
         self.sd_max.setValue(10)
         self.sd_max.setSingleStep(0.1)
         self.sd_max.setStatusTip('The maximum of standard deviation of each '
-                                 'neuron in RBFN.')
+                                 'neuron in RBFN (only for initialization).')
 
         inner_layout.addRow('Iterating Times:', self.iter_times)
         inner_layout.addRow('Population Size:', self.population_size)
         inner_layout.addRow('Reproduction:', self.reproduction)
+        inner_layout.addRow('Score Amplifier:', self.score_amplifier)
         inner_layout.addRow('Crossover Probability:', self.p_crossover)
         inner_layout.addRow('Mutation Probability:', self.p_mutation)
         inner_layout.addRow('Mutation Scale:', self.mutation_scale)
@@ -152,7 +160,7 @@ class TrainingPanel(Panel):
         self.avg_error.setStatusTip('The average error from the fitting '
                                     'function in current iteration.')
         self.least_error.setStatusTip('The least error from the fitting '
-                                      'function in current iteration.')
+                                      'function in training.')
 
         inner_layout.addRow('Current Iterating Time:', self.current_iter_time)
         inner_layout.addRow('Current Error:', self.current_error)
@@ -238,7 +246,6 @@ class TrainingPanel(Panel):
             int(self.current_iter_time.text()), least, 1)
         self.iter_err_chart.append_point(
             int(self.current_iter_time.text()), avg, 0)
-        
 
     def __run(self):
         self.progressbar.setMaximum(self.iter_times.value())
@@ -259,6 +266,7 @@ class TrainingPanel(Panel):
                        self.p_crossover.value(), self.p_mutation.value(),
                        self.mutation_scale.value(), rbfn,
                        self.__current_dataset, mean_range, self.sd_max.value(),
+                       score_amplifier=self.score_amplifier.value(),
                        is_multicore=self.multicore_cb.isChecked())
         self.stop_btn.clicked.connect(self.__ga.stop)
         self.__ga.started.connect(self.__init_widgets)

@@ -8,7 +8,7 @@ from matplotlib.patches import Circle, Rectangle
 
 from PyQt5.QtWidgets import QSizePolicy
 
-matplotlib.style.use('seaborn')
+matplotlib.style.use('dark_background')
 
 
 class CarSimulatorPlot(FigureCanvas):
@@ -84,6 +84,6 @@ class CarSimulatorPlot(FigureCanvas):
     def paint_path(self, xdata, ydata):
         self.__paths = Line2D(xdata, ydata,
                               lw=self.car_radius * 2, solid_capstyle='round',
-                              alpha=0.5, color='gold')
+                              color='gold')
         self.axes.add_line(self.__paths)
         self.draw()

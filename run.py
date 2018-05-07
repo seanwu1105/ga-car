@@ -54,9 +54,8 @@ class RunCar(QThread):
                                       "since the distance type error.")
                 break
 
-            next_wheel_angle = self.rbfn.output((dists[0], dists[1], dists[2]),
-                                                antinorm=True,
-                                                show=True)
+            next_wheel_angle = self.rbfn.output((dists[0], dists[2], dists[1]),
+                                                antinorm=True)
 
             results.append({
                 'x': self.car.pos[0],
