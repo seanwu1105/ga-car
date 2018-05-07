@@ -55,7 +55,8 @@ class RunCar(QThread):
                 break
 
             next_wheel_angle = self.rbfn.output((dists[0], dists[1], dists[2]),
-                                                antinorm=True)
+                                                antinorm=True,
+                                                show=True)
 
             results.append({
                 'x': self.car.pos[0],

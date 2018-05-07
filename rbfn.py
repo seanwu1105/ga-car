@@ -10,12 +10,18 @@ class RBFN(object):
                                mean_range=mean_range) for j in range(nneuron)]
         self.neurons.insert(0, Neuron(is_threshold=True))
 
-    def output(self, data, antinorm=False):
+    def output(self, data, antinorm=False, show=False):
         data = np.array(data)
         for neuron in self.neurons:
             neuron.input_data(data)
+        if show:
+            for neuron in self.neurons:
+                print(neuron.output, end=' ')
+            print()
         res = sum(n.output for n in self.neurons)
         if antinorm:
+            if show:
+                print(self.__antinormalize(res))
             return self.__antinormalize(res)
         return res
 
@@ -34,6 +40,7 @@ class RBFN(object):
 
         nneuron = len(self.neurons)
         self.neurons[0].sw = params[0]
+        self.neurons[0].is_threshold = True
         weights = params[1:nneuron]
         means = params[nneuron:-(nneuron - 1)]
         sds = params[-(nneuron - 1):]
@@ -80,6 +87,10 @@ class Neuron(object):
         self.__input_data = None
         self.output = None
 
+        if self.is_threshold:
+            self.mean = None
+            self.sd = None
+
     def input_data(self, data):
         """Feed the input data.
 
@@ -96,6 +107,8 @@ class Neuron(object):
             self.output = self.__get_output(self.__input_data)
 
     def __get_output(self, data):
+        if self.is_threshold:
+            return self.sw
         if self.sd <= 0:
             return 0
         return self.sw * math.exp(

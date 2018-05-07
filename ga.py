@@ -76,8 +76,10 @@ class GA(QThread):
         self.sig_console.emit('Selecting the best chromosome...')
         results = self.__get_fitting_function_results()
         self.__show_results(results)
-        best_chromosome = min(zip(results, self.population), key=lambda s: s[0])
+        best_chromosome = min(
+            zip(results, self.population), key=lambda s: s[0])
         self.sig_console.emit('The least error: %d' % best_chromosome[0])
+        self.sig_console.emit('The best chromosome: \n{}'.format(best_chromosome[1]))
         self.rbfn.load_model(best_chromosome[1])
         self.sig_rbfn.emit(self.rbfn)
 
@@ -95,19 +97,20 @@ class GA(QThread):
         chromosome = np.append(chromosome, np.random.uniform(
             *self.mean_range, (self.nneuron - 1) * self.data_dim))
         return np.append(chromosome, np.random.uniform(
-            0, self.sd_max, self.nneuron - 1))
+            0.01, self.sd_max, self.nneuron - 1))
 
     def __get_fitting_function_results(self):
         if self.is_multicore:
             with mp.Pool() as pool:
                 results = pool.map(functools.partial(fitting_func,
-                                                    dataset=self.dataset,
-                                                    rbfn=copy.deepcopy(self.rbfn)),
-                                self.population)
+                                                     dataset=self.dataset,
+                                                     rbfn=copy.deepcopy(self.rbfn)),
+                                   self.population)
         else:
             results = list()
             for chromosome in self.population:
-                results.append(fitting_func(chromosome, self.dataset, self.rbfn))
+                results.append(fitting_func(
+                    chromosome, self.dataset, self.rbfn))
         return np.array(results)
 
     def __roulette_wheel_selection(self, choices):
@@ -163,13 +166,19 @@ class GA(QThread):
     def __mutation(self):
         for idx, _ in enumerate(self.population):
             if random.uniform(0, 1) <= self.pm:
+                if bool(random.getrandbits(1)):
+                    s = -self.mutation_scale
+                else:
+                    s = self.mutation_scale
                 self.population[idx] = self.__chromosome_limiter(
-                    self.population[idx] + self.mutation_scale * self.__create_chromosome())
+                    self.population[idx] + s * self.__create_chromosome())
 
     def __chromosome_limiter(self, chromosome):
         np.clip(chromosome[:self.nneuron], -1,
                 1, out=chromosome[:self.nneuron])
-        np.clip(chromosome[-(self.nneuron - 1):], 0.0001,
+        np.clip(chromosome[self.nneuron:-(self.nneuron - 1)], *
+                self.mean_range, out=chromosome[self.nneuron:-(self.nneuron - 1)])
+        np.clip(chromosome[-(self.nneuron - 1):], 0.001,
                 None, out=chromosome[-(self.nneuron - 1):])
         return chromosome
 
@@ -178,6 +187,7 @@ class GA(QThread):
             time.sleep(0.001)
             self.sig_current_error.emit(res)
         self.sig_iter_error.emit(sum(results) / len(results), min(results))
+
 
 def fitting_func(chromosome, dataset, rbfn):
     """Calculate the error function (fitting function) for each chromosome.
@@ -194,5 +204,9 @@ def fitting_func(chromosome, dataset, rbfn):
         float: The result of fitting function.
     """
 
+    #print('c: {}'.format(chromosome))
+
     rbfn.load_model(chromosome)
-    return sum(abs(d.o - rbfn.output(d.i, antinorm=True)) for d in dataset)
+    res = sum(abs(d.o - rbfn.output(d.i, antinorm=True)) for d in dataset)
+    #print('r: {}'.format(res))
+    return res

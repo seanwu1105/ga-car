@@ -108,12 +108,12 @@ class TrainingPanel(Panel):
 
         self.nneuron = QSpinBox()
         self.nneuron.setRange(1, 1000)
-        self.nneuron.setValue(4)
+        self.nneuron.setValue(3)
         self.nneuron.setStatusTip('The number of RBFN neuron.')
 
         self.sd_max = QDoubleSpinBox()
         self.sd_max.setRange(0.01, 20)
-        self.sd_max.setValue(1)
+        self.sd_max.setValue(10)
         self.sd_max.setSingleStep(0.1)
         self.sd_max.setStatusTip('The maximum of standard deviation of each '
                                  'neuron in RBFN.')
@@ -235,9 +235,10 @@ class TrainingPanel(Panel):
         self.avg_error.setText('{:.7f}'.format(avg))
         self.least_error.setText('{:.7f}'.format(least))
         self.iter_err_chart.append_point(
-            int(self.current_iter_time.text()), avg, 0)
-        self.iter_err_chart.append_point(
             int(self.current_iter_time.text()), least, 1)
+        self.iter_err_chart.append_point(
+            int(self.current_iter_time.text()), avg, 0)
+        
 
     def __run(self):
         self.progressbar.setMaximum(self.iter_times.value())
