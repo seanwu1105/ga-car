@@ -54,8 +54,15 @@ class RunCar(QThread):
                                       "since the distance type error.")
                 break
 
-            next_wheel_angle = self.rbfn.output((dists[0], dists[2], dists[1]),
-                                                antinorm=True)
+            if len(self.rbfn.neurons[1].mean) == 3:
+                next_wheel_angle = self.rbfn.output((dists[0], dists[2], dists[1]),
+                                                    antinorm=True)
+            elif len(self.rbfn.neurons[1].mean) == 5:
+                next_wheel_angle = self.rbfn.output((*self.car.pos, dists[0], dists[2], dists[1]),
+                                                    antinorm=True)
+            else:
+                raise ValueError('The length of input is not match to the one '
+                                 'of trained RBFN.')
 
             results.append({
                 'x': self.car.pos[0],

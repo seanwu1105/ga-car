@@ -70,7 +70,7 @@ class TrainingPanel(Panel):
 
         self.population_size = QSpinBox()
         self.population_size.setRange(1, 100000000)
-        self.population_size.setValue(100)
+        self.population_size.setValue(200)
         self.population_size.setStatusTip('The population size for genetic '
                                           'algorithm.')
 

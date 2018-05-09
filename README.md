@@ -18,6 +18,16 @@ err = (1 / N) * sum(abs(d.expected_output - RBFN(d.input)) for d in training_dat
 
 `N` is the total number of training data.
 
+### Chromosome
+
+The chromosome is an `1 * (1 + NumOfRbfnNeuron + NumOfRbfnNeuron * InputDataDim + NumOfRbfnNeuron)` numpy array which is also the every parameters in RBFN. The spec of it is:
+
+|   Threshold SW  |       SWs       |          Means         |          SDs          |
+|:---------------:|:---------------:|:----------------------:|----------------------:|
+|`chromosome[0]`  |`chromosome[1:n]`|`chromosome[n:-(n - 1)]`|`chromosome[-(n - 1):]`|
+
+Where `n` is the # of RBFN neuron.
+
 ### Score in Selection of Genetic Algorithm
 
 The score (affinity) of each chromosome is defined:
