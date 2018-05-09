@@ -10,6 +10,7 @@ GitLab: https://gitlab.com/GLaDOS1105/ga-car
 """
 
 import collections
+import multiprocessing
 import pathlib
 import sys
 
@@ -64,4 +65,5 @@ def read_training_datasets(folderpath='data'):
 
 
 if __name__ == '__main__':
+    multiprocessing.freeze_support()
     main()
