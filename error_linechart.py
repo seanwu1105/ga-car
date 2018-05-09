@@ -26,7 +26,7 @@ class ErrorLineChart(QFrame):
                 series.setName(self.series_names[idx])
         self.chart.createDefaultAxes()
         self.chart.layout().setContentsMargins(0, 0, 0, 0)
-        self.chart.setTheme(QChart.ChartThemeDark)
+        # self.chart.setTheme(QChart.ChartThemeDark)
         self.chart.axisY().setTickCount(3)
         chart_view = QChartView(self.chart)
         chart_view.setRenderHint(QPainter.Antialiasing)

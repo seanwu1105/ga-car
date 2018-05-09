@@ -61,7 +61,7 @@ class GA(QThread):
             self.sig_current_iter_time.emit(i)
 
             # calculate the fitting function
-            results = self.__get_fitting_function_results()
+            results = self.__get_err_function_results()
             best_chromosome = min(best_chromosome, *zip(
                 results, self.population), key=lambda s: s[0])
 
@@ -80,7 +80,7 @@ class GA(QThread):
             self.__mutation()
 
         self.sig_console.emit('Selecting the best chromosome...')
-        results = self.__get_fitting_function_results()
+        results = self.__get_err_function_results()
         best_chromosome = min(best_chromosome, *zip(
             results, self.population), key=lambda s: s[0])
         self.__show_results(results, best_chromosome[0])
@@ -106,18 +106,17 @@ class GA(QThread):
         return np.append(chromosome, np.random.uniform(
             0.01, self.sd_max, self.nneuron - 1))
 
-    def __get_fitting_function_results(self):
+    def __get_err_function_results(self):
         if self.is_multicore:
             with mp.Pool() as pool:
-                results = pool.map(functools.partial(fitting_func,
+                results = pool.map(functools.partial(err_func,
                                                      dataset=self.dataset,
                                                      rbfn=copy.deepcopy(self.rbfn)),
                                    self.population)
         else:
             results = list()
             for chromosome in self.population:
-                results.append(fitting_func(
-                    chromosome, self.dataset, self.rbfn))
+                results.append(err_func(chromosome, self.dataset, self.rbfn))
         return np.array(results)
 
     def __roulette_wheel_selection(self, choices):
@@ -196,8 +195,8 @@ class GA(QThread):
         self.sig_iter_error.emit(sum(results) / len(results), best)
 
 
-def fitting_func(chromosome, dataset, rbfn):
-    """Calculate the error function (fitting function) for each chromosome.
+def err_func(chromosome, dataset, rbfn):
+    """Calculate the error function for each chromosome.
     This function is specially designed to be pickable for multiprocessing.
 
     Args:

@@ -115,7 +115,7 @@ class TrainingPanel(Panel):
 
         self.nneuron = QSpinBox()
         self.nneuron.setRange(1, 1000)
-        self.nneuron.setValue(3)
+        self.nneuron.setValue(6)
         self.nneuron.setStatusTip('The number of RBFN neuron.')
 
         self.sd_max = QDoubleSpinBox()

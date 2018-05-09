@@ -8,7 +8,7 @@ from matplotlib.patches import Circle, Rectangle
 
 from PyQt5.QtWidgets import QSizePolicy
 
-matplotlib.style.use('dark_background')
+# matplotlib.style.use('dark_background')
 
 
 class CarSimulatorPlot(FigureCanvas):
