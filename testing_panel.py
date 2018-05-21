@@ -3,7 +3,6 @@
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import (QHBoxLayout, QFormLayout, QGroupBox, QComboBox,
                              QPushButton, QLabel, QTextEdit, QSpinBox)
-import numpy as np
 
 from panel import Panel
 from car_simulator_plot import CarSimulatorPlot
