@@ -103,7 +103,7 @@ The data location is `/data`. The application will load every files with `*.txt`
 
 Every coordinates between the fourth and last line are the corner point of the walls in map.
 
-## Dependency
+## Dependencies
 
 * [numpy](http://www.numpy.org/)
 
