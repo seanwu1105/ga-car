@@ -6,7 +6,7 @@ A sandbox practice for the genetic algorithm.
 
 ## Objective
 
-Use genetic algorithm to train the RBFN parameters. Input is the distances detected from car radar. Output is the angle of wheel.
+Use genetic algorithm to find the best RBFN parameters, which input is the distances detected from car radar and output is the angle of wheel.
 
 ### Objective Function
 
