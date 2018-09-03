@@ -6,7 +6,6 @@ to implement the genetic algorithm with a car simulation.
 This file is the entry point of whole project.
 
 GitLab: https://gitlab.com/GLaDOS1105/ga-car
-
 """
 
 import collections
@@ -16,17 +15,14 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
-import gui_base
-
-
-TrainingData = collections.namedtuple('TrainingData', ['i', 'o'])
-
+import ga_car.gui.base
+from ga_car.backend.ga import TrainingData
 
 def main():
     """ Create GUI application and read files. """
     sys.argv += ['--style', 'fusion']
     app = QApplication(sys.argv)
-    window = gui_base.GUIBase(read_maps(), read_training_datasets())
+    window = ga_car.gui.base.GUIBase(read_maps(), read_training_datasets())
     window.show()
     sys.exit(app.exec_())
 

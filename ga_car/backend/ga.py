@@ -1,3 +1,4 @@
+import collections
 import copy
 import functools
 import itertools
@@ -9,8 +10,10 @@ import time
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 import numpy as np
 
-from rbfn import RBFN
-from main import TrainingData  # for pickling in concurrent.futures
+from ga_car.backend.rbfn import RBFN
+
+
+TrainingData = collections.namedtuple('TrainingData', ['i', 'o'])
 
 
 class GA(QThread):
@@ -70,7 +73,8 @@ class GA(QThread):
             # reproduction
             avg_error = sum(results) / len(results)
             scores = np.full_like(results, max(results) + avg_error) - results
-            scores = np.power(scores, self.score_amplifier) # amplify the winner
+            # amplify the winner
+            scores = np.power(scores, self.score_amplifier)
             self.__reproduction(dict(zip(scores, self.population)))
 
             # crossover

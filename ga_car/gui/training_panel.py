@@ -6,11 +6,11 @@ from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox,
                              QProgressBar, QPushButton, QRadioButton,
                              QCheckBox)
 
-from panel import Panel
-from testing_panel import TestingPanel
-from error_linechart import ErrorLineChart
-from rbfn import RBFN
-from ga import GA
+from ga_car.gui.panel import Panel
+from ga_car.gui.testing_panel import TestingPanel
+from ga_car.gui.error_linechart import ErrorLineChart
+from ga_car.backend.rbfn import RBFN
+from ga_car.backend.ga import GA
 
 
 class TrainingPanel(Panel):
