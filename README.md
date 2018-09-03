@@ -1,5 +1,7 @@
 # Car Control Simulator Based on Genetic Algorithm
 
+[![Requirements Status](https://requires.io/github/GLaDOS1105/ga-car/requirements.svg?branch=master)](https://requires.io/github/GLaDOS1105/ga-car/requirements/?branch=master)
+
 A sandbox practice for the genetic algorithm.
 
 ![preview](https://i.imgur.com/2VrKxAT.gif)
