@@ -5,8 +5,8 @@ Define the GUI: main window.
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout
 
-from ga_car.gui.training_panel import TrainingPanel
-from ga_car.gui.testing_panel import TestingPanel
+from .training_panel import TrainingPanel
+from .testing_panel import TestingPanel
 
 class GUIBase(QMainWindow):
     """ The base of GUI, containing the status bar and menu. """

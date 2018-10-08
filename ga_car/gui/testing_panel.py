@@ -4,11 +4,11 @@ from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import (QHBoxLayout, QFormLayout, QGroupBox, QComboBox,
                              QPushButton, QLabel, QTextEdit, QSpinBox)
 
-from ga_car.gui.panel import Panel
-from ga_car.gui.car_simulator_plot import CarSimulatorPlot
-from ga_car.backend.car import Car
-from ga_car.backend.run import RunCar
-from ga_car.backend.rbfn import RBFN
+from .panel import Panel
+from .car_simulator_plot import CarSimulatorPlot
+from ..backend.car import Car
+from ..backend.run import RunCar
+from ..backend.rbfn import RBFN
 
 
 class TestingPanel(Panel):

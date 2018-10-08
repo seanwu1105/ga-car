@@ -10,7 +10,7 @@ import time
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 import numpy as np
 
-from ga_car.backend.rbfn import RBFN
+from .rbfn import RBFN
 
 
 TrainingData = collections.namedtuple('TrainingData', ['i', 'o'])
