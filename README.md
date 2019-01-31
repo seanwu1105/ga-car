@@ -1,6 +1,6 @@
 # Car Control Simulator Based on Genetic Algorithm
 
-[![Requirements Status](https://requires.io/github/GLaDOS1105/ga-car/requirements.svg?branch=master)](https://requires.io/github/GLaDOS1105/ga-car/requirements/?branch=master)
+[![Requirements Status](https://requires.io/github/seanwu1105/ga-car/requirements.svg?branch=master)](https://requires.io/github/seanwu1105/ga-car/requirements/?branch=master)
 
 A sandbox practice for the genetic algorithm.
 
@@ -49,7 +49,7 @@ scores = np.power(scores, score_amplifier)
 Download this project
 
 ``` bash
-git clone https://gitlab.com/GLaDOS1105/ga-car.git
+git clone https://gitlab.com/seanwu1105/ga-car.git
 ```
 
 Change directory to the root of the project
